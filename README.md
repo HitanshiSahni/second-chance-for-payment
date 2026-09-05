@@ -101,21 +101,21 @@ Second enforces a strict, non-bypassable **3-Tier Separation of Concerns**:
 Unlike standard classifiers that only ask *"Will this fail?"*, Second implements **Action-Conditioned Value Estimation** via an S-Learner meta-algorithm.
 
 ### 1. Counterfactual Lift ($\Delta P$)
-For every policy-eligible action $A \in \{\text{SILENT\_RETRY}, \text{INFRASTRUCTURE\_RECOVERY}, \text{CUSTOMER\_RESOLUTION}\}$:
+For every policy-eligible action $A \in \mathcal{A}_{\text{eligible}}$ (e.g., `SILENT_RETRY`, `INFRASTRUCTURE_RECOVERY`, `CUSTOMER_RESOLUTION`):
 
-$$\Delta P(A) = P(\text{Recovery} \mid \mathbf{X}, A) - P(\text{Recovery} \mid \mathbf{X}, \text{WAIT})$$
+$$\Delta P(A) = P(\text{Recovery} \mid \mathbf{X}, A) - P(\text{Recovery} \mid \mathbf{X}, A = \text{WAIT})$$
 
-*Where $\text{WAIT}$ represents the no-intervention baseline (natural passive self-resolution).*
+*Where $A = \text{WAIT}$ represents the no-intervention baseline (natural passive self-resolution).*
 
 ### 2. Net Incremental Recovery ($\text{NIR}$)
 Turn probabilities into financial impact:
 
-$$\text{NIR}(A) = \left(\Delta P(A) \times \text{Transaction Amount}\right) - \text{Intervention Cost}(A)$$
+$$\text{NIR}(A) = (\Delta P(A) \times \text{Amount}) - \text{Cost}(A)$$
 
 ### 3. Action Selection Rule
-$$\text{Selected Action} = \arg\max_{A \in \text{Allowed}} \left\{\text{NIR}(A)\right\} \quad \text{subject to} \quad \text{NIR} \ge \text{Threshold}$$
+$$\text{Action}^* = \operatorname*{arg\,max}_{A \in \mathcal{A}_{\text{eligible}}} \text{NIR}(A) \quad \text{subject to} \quad \text{NIR}(A) \ge \tau$$
 
-*If all eligible interventions yield $\text{NIR} < \text{Threshold}$ (e.g. ₹0.50), the system defaults to `WAIT` (if retry budget remains) or `HALT` to avoid wasting money.*
+*If all eligible interventions yield $\text{NIR}(A) < \tau$ (e.g., ₹0.50 minimum threshold), the system defaults to `WAIT` (if retry budget remains) or `HALT` to avoid wasting money on negative-ROI interventions.*
 
 ---
 
