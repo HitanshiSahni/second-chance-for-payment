@@ -21,28 +21,37 @@ silently assumed.
 """
 from __future__ import annotations
 
+import os
 import argparse
 
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.metrics import brier_score_loss, log_loss, roc_auc_score
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import brier_score_loss, log_loss, roc_auc_score, accuracy_score
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 from app.core.config import DEFAULT_TRAIN_DATA_PATH
-from app.ml.feature_engineering import FEATURE_NAMES
+from app.ml.feature_engineering import FEATURE_NAMES, add_interaction_features
 from app.ml.model_registry import save_model
 from app.simulation.data_generator import generate_dataset
 
 
-def _load_or_generate(n: int, seed: int, path: str) -> pd.DataFrame:
+def _load_or_generate(n: int, seed: int, path: str, force_generate: bool = False) -> pd.DataFrame:
+    if os.path.exists(path) and not force_generate:
+        df = pd.read_csv(path)
+        df = add_interaction_features(df)
+        return df
+
     df = generate_dataset(n=n, seed=seed, logging_policy="random")
+    df = add_interaction_features(df)
     df.to_csv(path, index=False)
     return df
 
 
-def train(n_samples: int = 20000, seed: int = 42) -> dict:
-    df = _load_or_generate(n_samples, seed, str(DEFAULT_TRAIN_DATA_PATH))
+def train(n_samples: int = 10000, seed: int = 42, force_generate: bool = False) -> dict:
+    df = _load_or_generate(n_samples, seed, str(DEFAULT_TRAIN_DATA_PATH), force_generate=force_generate)
 
     X = df[FEATURE_NAMES].values
     y = df["recovered"].values
@@ -51,26 +60,36 @@ def train(n_samples: int = 20000, seed: int = 42) -> dict:
         X, y, test_size=0.2, random_state=seed, stratify=y
     )
 
-    model = GradientBoostingClassifier(
-        n_estimators=150,
-        max_depth=3,
-        learning_rate=0.05,
-        subsample=0.8,
-        random_state=seed,
+    pipeline = Pipeline(
+        [
+            ("scaler", StandardScaler()),
+            (
+                "clf",
+                LogisticRegression(
+                    C=1.0,
+                    max_iter=1000,
+                    random_state=seed,
+                    penalty="l2",
+                ),
+            ),
+        ]
     )
-    model.fit(X_train, y_train)
+    pipeline.fit(X_train, y_train)
 
-    val_probs = model.predict_proba(X_val)[:, 1]
+    val_probs = pipeline.predict_proba(X_val)[:, 1]
+    val_preds = (val_probs >= 0.5).astype(int)
+
     metrics = {
         "n_train": int(len(X_train)),
         "n_val": int(len(X_val)),
         "val_auc": float(roc_auc_score(y_val, val_probs)),
+        "val_accuracy_at_0_5": float(accuracy_score(y_val, val_preds)),
         "val_log_loss": float(log_loss(y_val, val_probs)),
         "val_brier_score": float(brier_score_loss(y_val, val_probs)),
         "base_recovery_rate": float(np.mean(y)),
     }
 
-    save_model(model)
+    save_model(pipeline)
     return metrics
 
 

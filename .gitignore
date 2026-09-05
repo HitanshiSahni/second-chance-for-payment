@@ -1,106 +1,82 @@
-# ==============================================================================
-# RecoveryOS - .gitignore
-# ==============================================================================
-
-# Byte-compiled / optimized / DLL files
+# Python Bytecode & Builds
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
+*.egg-info/
+build/
+dist/
+*.egg
+.eggs/
+.ipynb_checkpoints/
+
+# ML Experiment Temporary Outputs
+catboost_info/
+*.joblib.tmp
 
 # Virtual Environments
-.venv/
 venv/
+.venv/
 env/
 ENV/
 env.bak/
 venv.bak/
 
-# Distribution / Packaging
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-# Unit test / coverage reports
-.pytest_cache/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.tox/
-.nox/
-htmlcov/
-
-# Local databases & runtime logs
-*.db
-*.sqlite
-*.sqlite3
-data/*.db
-data/*.sqlite3
-data/recoveryos.db
-*.log
-
-# Frontend (Node / Vite / React)
-node_modules/
-frontend/node_modules/
-frontend/dist/
-frontend/.vite/
-.npm
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# Environment Variables & Local Secrets
-.env
-.env.local
-.env.*.local
-*.env
-
-# Operating System Files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-desktop.ini
-
-# IDEs and Editors
+# IDE & Editor Artifacts
+.vscode/
 .idea/
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.sublime-workspace
-*.sublime-project
 *.swp
 *.swo
 *~
+*.sublime-project
+*.sublime-workspace
 
-# Temporary & System Generated Files
-.tempmediaStorage/
-.system_generated/
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Node & Frontend Build Outputs
+node_modules/
+frontend/node_modules/
+frontend/dist/
+.vite/
+frontend/.vite/
+
+# Database Files (Local Runtime DBs)
+*.db
+*.sqlite
+*.sqlite3
+
+# Data Artifacts (Runtime CSVs ignored, seed training set tracked)
+data/*.db
+data/*.sqlite3
+data/*.csv
+!data/historical_train.csv
+!data/model.joblib
+
+# Test & Coverage Artifacts
+.pytest_cache/
+htmlcov/
+.coverage
+.coverage.*
+
+# Logs, Temporary Files & Scratch Experiment Scripts
+*.log
+*.tmp
+*.temp
 scratch/
+
+# Local Environment Variables
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+
+# Explicit Whitelists for Essential Project Directories
+!docs/
+!docs/**
+!public/
+!public/**

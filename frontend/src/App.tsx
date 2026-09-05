@@ -8,6 +8,7 @@ import { DecisionReplayPage } from "./pages/DecisionReplayPage";
 import { Simulator } from "./pages/Simulator";
 import { LiveCases } from "./pages/LiveCases";
 import { ArchitecturePage } from "./pages/ArchitecturePage";
+import { LandingPage } from "./pages/LandingPage";
 import { api } from "./services/api";
 import type {
   AuditEventItem,
@@ -18,6 +19,13 @@ import type {
 } from "./types/api";
 
 export const App: React.FC = () => {
+  // Landing page vs dashboard
+  const [showLanding, setShowLanding] = useState<boolean>(() => {
+    const raw = window.location.hash.replace("#", "");
+    const landingHashes = ["", "features", "pipeline", "tech", "landing"];
+    return landingHashes.includes(raw);
+  });
+
   // Navigation & Shell State
   const [currentRoute, setCurrentRoute] = useState<NavRoute>(() => {
     const hash = window.location.hash.replace("#", "") as NavRoute;
@@ -47,6 +55,10 @@ export const App: React.FC = () => {
   const [batchResult, setBatchResult] = useState<BatchEvaluationResult | null>(null);
   const [loadingBatch, setLoadingBatch] = useState<boolean>(false);
   const [batchError, setBatchError] = useState<string | null>(null);
+  const [benchmarkParams, setBenchmarkParams] = useState<{ n: number; seed: number }>({
+    n: 500,
+    seed: 777,
+  });
 
   // Modals & Action Status
   const [isSeeding, setIsSeeding] = useState<boolean>(false);
@@ -101,6 +113,7 @@ export const App: React.FC = () => {
 
   // Run Batch Evaluation
   const runBatchEvaluation = async (n = 500, seed = 777) => {
+    setBenchmarkParams({ n, seed });
     setLoadingBatch(true);
     setBatchError(null);
     try {
@@ -166,12 +179,20 @@ export const App: React.FC = () => {
     }
     setCurrentRoute(route);
     window.location.hash = route;
+    setShowLanding(false);
+  };
+
+  // Enter dashboard from landing
+  const handleEnterDashboard = () => {
+    setShowLanding(false);
+    setCurrentRoute("overview");
+    window.location.hash = "overview";
   };
 
   // Synchronize hash changes
   useEffect(() => {
     const onHashChange = () => {
-      const hash = window.location.hash.replace("#", "") as NavRoute;
+      const rawHash = window.location.hash.replace("#", "");
       const validRoutes: NavRoute[] = [
         "overview",
         "benchmark",
@@ -180,8 +201,11 @@ export const App: React.FC = () => {
         "cases",
         "architecture",
       ];
-      if (validRoutes.includes(hash)) {
-        setCurrentRoute(hash);
+      if (validRoutes.includes(rawHash as NavRoute)) {
+        setCurrentRoute(rawHash as NavRoute);
+        setShowLanding(false);
+      } else if (rawHash === "" || ["features", "pipeline", "tech", "landing"].includes(rawHash)) {
+        setShowLanding(true);
       }
     };
     window.addEventListener("hashchange", onHashChange);
@@ -210,6 +234,12 @@ export const App: React.FC = () => {
     }
   }, [selectedCaseId, loadCaseDetails]);
 
+  // LANDING PAGE
+  if (showLanding) {
+    return <LandingPage onEnterDashboard={handleEnterDashboard} />;
+  }
+
+  // DASHBOARD
   return (
     <div className={`app-layout ${isSidebarCollapsed ? "sidebar-collapsed" : ""}`}>
       {/* 1. COLLAPSIBLE SIDEBAR */}
@@ -234,7 +264,7 @@ export const App: React.FC = () => {
         />
 
         {/* Dynamic Route Viewport */}
-        <main className="app-content">
+        <main className="app-content" key={currentRoute}>
           {currentRoute === "overview" && (
             <Overview
               cases={cases}
@@ -252,6 +282,8 @@ export const App: React.FC = () => {
               loading={loadingBatch}
               error={batchError}
               onRunBatch={runBatchEvaluation}
+              lastN={benchmarkParams.n}
+              lastSeed={benchmarkParams.seed}
             />
           )}
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   ShieldCheck,
   Clock,
@@ -11,7 +11,9 @@ import {
   AlertCircle,
   ChevronDown,
   ChevronUp,
+  Download,
 } from "lucide-react";
+import { useScrollReveal } from "../hooks/useScrollReveal";
 import type {
   AuditEventItem,
   CaseListItem,
@@ -55,7 +57,80 @@ export const DecisionReplayPage: React.FC<DecisionReplayPageProps> = ({
   const [overrideHealth, setOverrideHealth] = useState<number>(0.95);
   const [expandedAuditId, setExpandedAuditId] = useState<string | null>(null);
 
+  const pageRef = useRef<HTMLDivElement>(null);
+  useScrollReveal(pageRef);
+
   const activeCase = cases.find((c) => c.id === selectedCaseId);
+
+  const handleExportAuditReport = () => {
+    if (!activeCase) return;
+
+    const lines: string[] = [
+      `# FORENSIC AUDIT REPORT — SECOND ORCHESTRATOR`,
+      `Generated: ${new Date().toISOString()}`,
+      `Built for Razorpay Buildathon · Track 03 (AI Revenue Recovery)`,
+      ``,
+      `## 1. TRANSACTION PROFILE`,
+      `- Transaction ID: ${activeCase.transaction_id}`,
+      `- Amount: ₹${activeCase.amount.toFixed(2)} (${activeCase.currency})`,
+      `- Failure Code: ${activeCase.failure_code}`,
+      `- Failure Category: ${activeCase.failure_category || "N/A"}`,
+      `- Final FSM State: ${activeCase.state}`,
+      `- Selected Action: ${activeCase.selected_action || "None"}`,
+      `- Re-evaluations: ${activeCase.reevaluation_count} / 5 used`,
+      `- Recovery Status: ${activeCase.is_recovered ? "RECOVERED (₹" + (activeCase.recovered_amount || activeCase.amount) + ")" : "NOT RECOVERED"}`,
+      ``,
+    ];
+
+    if (decision) {
+      lines.push(
+        `## 2. POLICY ENGINE COMPLIANCE`,
+        `- Deterministic Rules Passed: ${decision.available_actions.length} eligible actions`,
+        `- Eligible Candidate Actions: ${decision.available_actions.join(", ")}`,
+        `- Blocked Actions & Reasons:`,
+        ...Object.entries(decision.blocked_actions || {}).map(
+          ([act, reason]) => `  * ${act}: ${reason}`
+        ),
+        ``,
+        `## 3. ACTION-CONDITIONED ML PROBABILITY & NIR OPTIMIZATION`,
+        `Selected Action: ${decision.selected_action}`,
+        `Selection Reason: ${decision.selection_reason}`,
+        ``,
+        `| Action | P(recovery) | Baseline P(WAIT) | Lift ΔP | Cost | Net Incremental Recovery (NIR) | Selected |`,
+        `| :--- | :--- | :--- | :--- | :--- | :--- | :--- |`,
+        ...decision.evaluations.map((act) => {
+          const isWinner = act.action === decision.selected_action;
+          return `| ${act.action} | ${(act.predicted_recovery_probability * 100).toFixed(1)}% | ${(act.baseline_probability * 100).toFixed(1)}% | ${(act.delta_p * 100).toFixed(1)}% | ₹${act.intervention_cost} | ₹${act.nir.toFixed(2)} | ${isWinner ? "✓ WINNER" : "No"} |`;
+        }),
+        ``
+      );
+    }
+
+    if (auditTrail && auditTrail.length > 0) {
+      lines.push(
+        `## 4. CRYPTOGRAPHIC-STYLE AUDIT TRAIL`,
+        ...auditTrail.map(
+          (a) => `[${a.timestamp}] EVENT: ${a.event_type} | TRANSITION: ${a.previous_state || "INIT"} -> ${a.new_state || "CURRENT"} | RATIONALE: ${a.metadata?.decision_rationale || a.metadata?.reason || JSON.stringify(a.metadata || {})}`
+        ),
+        ``
+      );
+    }
+
+    lines.push(
+      `---`,
+      `End of Forensic Audit Report. Verified by Second Decoupled Policy Engine & S-Learner Evaluator.`
+    );
+
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `forensic_audit_${activeCase.transaction_id}.md`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
 
   const filteredCases = cases.filter(
     (c) =>
@@ -89,7 +164,7 @@ export const DecisionReplayPage: React.FC<DecisionReplayPageProps> = ({
     activeCase?.failure_code === "ACCOUNT_CLOSED";
 
   return (
-    <div className="decision-workspace-page">
+    <div className="decision-workspace-page" ref={pageRef}>
       <div className="workspace-layout">
         {/* Left Column: Searchable Case Selector Navigator */}
         <div className="case-sidebar-pane">
@@ -190,6 +265,37 @@ export const DecisionReplayPage: React.FC<DecisionReplayPageProps> = ({
 
           {!loadingDecision && activeCase && (
             <div>
+              {/* Header with Export Audit Report Button */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  marginBottom: "1rem",
+                  flexWrap: "wrap",
+                  gap: "0.75rem",
+                }}
+              >
+                <div>
+                  <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#fff", margin: 0 }}>
+                    Forensic Decision Investigation
+                  </h2>
+                  <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", margin: "0.2rem 0 0 0" }}>
+                    Policy constraint compliance, counterfactual ML uplift estimation, and cryptographic audit trail
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.8125rem" }}
+                  onClick={handleExportAuditReport}
+                  title="Download complete compliance markdown report"
+                >
+                  <Download size={14} />
+                  Export Forensic Audit Report
+                </button>
+              </div>
+
               {/* Visual 6-Step FSM Pipeline Stepper */}
               <div className="pipeline-stepper">
                 {PIPELINE_STEPS.map((step, idx) => {

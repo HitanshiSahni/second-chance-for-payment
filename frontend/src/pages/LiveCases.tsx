@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   CreditCard,
   Search,
@@ -10,6 +10,7 @@ import {
 import type { CaseListItem } from "../types/api";
 import { formatINR, formatPercent } from "../services/api";
 import type { NavRoute } from "../components/Sidebar";
+import { useScrollReveal } from "../hooks/useScrollReveal";
 
 interface LiveCasesProps {
   cases: CaseListItem[];
@@ -49,23 +50,26 @@ export const LiveCases: React.FC<LiveCasesProps> = ({
   const totalVolume = cases.reduce((acc, c) => acc + c.amount, 0);
   const recoveredVolume = recoveredCases.reduce((acc, c) => acc + (c.recovered_amount || c.amount), 0);
 
+  const pageRef = useRef<HTMLDivElement>(null);
+  useScrollReveal(pageRef);
+
   return (
-    <div className="live-cases-page">
+    <div className="live-cases-page" ref={pageRef}>
       {/* Top Operations Summary Strip */}
       <div className="metrics-grid">
-        <div className="metric-card">
+        <div className="metric-card scroll-reveal delay-1">
           <span className="metric-label">Total Ingested Cases</span>
           <span className="metric-value">{cases.length}</span>
           <span className="metric-sub">Tracked in SQLite database</span>
         </div>
 
-        <div className="metric-card">
+        <div className="metric-card scroll-reveal delay-2">
           <span className="metric-label">Pipeline Volume</span>
           <span className="metric-value">{formatINR(totalVolume)}</span>
           <span className="metric-sub">Total failed payment volume</span>
         </div>
 
-        <div className="metric-card">
+        <div className="metric-card scroll-reveal delay-3">
           <span className="metric-label">Recovered Volume</span>
           <span className="metric-value emerald">{formatINR(recoveredVolume)}</span>
           <span className="metric-sub">
@@ -73,7 +77,7 @@ export const LiveCases: React.FC<LiveCasesProps> = ({
           </span>
         </div>
 
-        <div className="metric-card">
+        <div className="metric-card scroll-reveal delay-4">
           <span className="metric-label">Awaiting Re-evaluation</span>
           <span className="metric-value amber">{reevalCases.length}</span>
           <span className="metric-sub">Sleeping in wait loop</span>
@@ -81,7 +85,7 @@ export const LiveCases: React.FC<LiveCasesProps> = ({
       </div>
 
       {/* Main Operations Table Card */}
-      <div className="card">
+      <div className="card scroll-reveal delay-2">
         <div className="card-header" style={{ flexWrap: "wrap", gap: "1rem" }}>
           <div>
             <h3 className="card-title">

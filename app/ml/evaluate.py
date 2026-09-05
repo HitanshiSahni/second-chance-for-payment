@@ -26,7 +26,7 @@ from sklearn.metrics import (
 from sklearn.model_selection import train_test_split
 
 from app.core.config import DEFAULT_MODEL_PATH, DEFAULT_TRAIN_DATA_PATH
-from app.ml.feature_engineering import FEATURE_NAMES
+from app.ml.feature_engineering import FEATURE_NAMES, add_interaction_features
 from app.ml.model_registry import load_model
 
 
@@ -77,7 +77,8 @@ def evaluate_model(
 
     Returns exact metrics derived from the model artifact and dataset.
     """
-    df = pd.read_csv(data_path, usecols=FEATURE_NAMES + ["recovered"], low_memory=False)
+    df = pd.read_csv(data_path, low_memory=False)
+    df = add_interaction_features(df)
     X = df[FEATURE_NAMES].values
     y = df["recovered"].values
 
@@ -90,11 +91,18 @@ def evaluate_model(
     preds_val = (probs_val >= threshold).astype(int)
 
     cm = confusion_matrix(y_val, preds_val)
-    fi = dict(
-        pd.Series(model.feature_importances_, index=FEATURE_NAMES)
-        .sort_values(ascending=False)
-        .round(4)
-    )
+
+    clf = model.named_steps["clf"] if hasattr(model, "named_steps") else model
+    if hasattr(clf, "feature_importances_"):
+        weights = clf.feature_importances_
+    elif hasattr(clf, "coef_"):
+        weights = clf.coef_[0]
+    else:
+        weights = np.zeros(len(FEATURE_NAMES))
+
+    abs_weights = np.abs(weights)
+    sorted_indices = np.argsort(abs_weights)[::-1]
+    fi = {FEATURE_NAMES[i]: round(float(weights[i]), 4) for i in sorted_indices}
 
     calibration_info = compute_calibration_bins(y_val, probs_val, n_bins=5)
 
@@ -111,9 +119,9 @@ def evaluate_model(
             "brier_score": round(float(brier_score_loss(y_val, probs_val)), 4),
             "log_loss": round(float(log_loss(y_val, probs_val)), 4),
             "accuracy_at_0_5": round(float(accuracy_score(y_val, preds_val)), 4),
-            "precision_at_0_5": round(float(precision_score(y_val, preds_val)), 4),
-            "recall_at_0_5": round(float(recall_score(y_val, preds_val)), 4),
-            "f1_at_0_5": round(float(f1_score(y_val, preds_val)), 4),
+            "precision_at_0_5": round(float(precision_score(y_val, preds_val, zero_division=0)), 4),
+            "recall_at_0_5": round(float(recall_score(y_val, preds_val, zero_division=0)), 4),
+            "f1_at_0_5": round(float(f1_score(y_val, preds_val, zero_division=0)), 4),
         },
         "confusion_matrix": {
             "true_negatives": int(cm[0, 0]),
@@ -157,10 +165,11 @@ def print_evaluation_report(results: dict[str, Any]) -> None:
     for b in results["calibration"]["bins"]:
         print(f"Bin {b['bin_range']}: count={b['count']:4d} | mean_pred={b['mean_predicted_prob']:.3f} | actual={b['actual_recovery_rate']:.3f} | gap={b['absolute_gap']:.3f}")
 
-    print("\n--- Top 8 Feature Importances ---")
+    print("\n--- Top 8 Feature Coefficients / Importances ---")
     top_items = list(results["feature_importances"].items())[:8]
     for feat, imp in top_items:
-        print(f"  {feat:35s}: {imp:.4f} ({imp*100:.1f}%)")
+        sign = "+" if imp > 0 else ""
+        print(f"  {feat:35s}: {sign}{imp:.4f}")
     print("=" * 60 + "\n")
 
 

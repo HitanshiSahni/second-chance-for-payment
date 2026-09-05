@@ -98,11 +98,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside className={`app-sidebar ${collapsed ? "collapsed" : ""}`}>
       {/* Brand Header */}
       <div className="sidebar-header">
-        <div className="sidebar-brand">
-          <div className="sidebar-logo">R</div>
+        <div
+          className="sidebar-brand"
+          onClick={() => {
+            window.location.hash = "";
+          }}
+          style={{ cursor: "pointer" }}
+          title="Return to Landing Page"
+        >
+          <div className="sidebar-logo">
+            <img src="/Second_Logo.png" alt="Second" className="sidebar-logo-img" />
+          </div>
           {!collapsed && (
             <div className="sidebar-brand-text">
-              <span className="sidebar-brand-title">RecoveryOS</span>
+              <span className="sidebar-brand-title">Second</span>
               <span className="sidebar-brand-badge">AI Revenue Recovery</span>
             </div>
           )}
@@ -154,7 +163,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                           <span
                             style={{
                               fontSize: "0.6875rem",
-                              background: isActive ? "var(--indigo)" : "rgba(255,255,255,0.08)",
+                              background: isActive ? "var(--rzp-blue)" : "rgba(255,255,255,0.08)",
                               color: isActive ? "#fff" : "var(--text-secondary)",
                               padding: "0.1rem 0.45rem",
                               borderRadius: "9999px",
@@ -184,6 +193,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </span>
           )}
         </div>
+        {!collapsed && (
+          <div className="sidebar-buildathon-badge">
+            ₹ Built for Razorpay Buildathon
+          </div>
+        )}
       </div>
     </aside>
   );

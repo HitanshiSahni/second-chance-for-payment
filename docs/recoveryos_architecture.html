@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Second (RecoveryOS) — Interactive System Architecture One-Pager</title>
+  <style>
+    :root {
+      --bg-base: #0B0F17;
+      --bg-card: #111827;
+      --bg-elevated: #1F2937;
+      --bg-hover: #374151;
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-accent: rgba(99, 102, 241, 0.3);
+      --indigo: #6366F1;
+      --indigo-glow: rgba(99, 102, 241, 0.2);
+      --emerald: #10B981;
+      --emerald-glow: rgba(16, 185, 129, 0.15);
+      --cyan: #06B6D4;
+      --amber: #F59E0B;
+      --rose: #F43F5E;
+      --text-main: #F9FAFB;
+      --text-muted: #9CA3AF;
+      --text-secondary: #D1D5DB;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Inter", sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      line-height: 1.5;
+      padding: 2rem 1.5rem;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .container {
+      max-width: 1280px;
+      width: 100%;
+    }
+
+    /* Header & Hero */
+    header {
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.25rem 0.6rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .badge-indigo { background: rgba(99, 102, 241, 0.15); color: #A5B4FC; border: 1px solid rgba(99, 102, 241, 0.3); }
+    .badge-emerald { background: rgba(16, 185, 129, 0.15); color: #6EE7B7; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .badge-cyan { background: rgba(6, 182, 212, 0.15); color: #67E8F9; border: 1px solid rgba(6, 182, 212, 0.3); }
+    .badge-rose { background: rgba(244, 63, 94, 0.15); color: #FDA4AF; border: 1px solid rgba(244, 63, 94, 0.3); }
+    .badge-amber { background: rgba(245, 158, 11, 0.15); color: #FCD34D; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(to right, #FFFFFF, #CBD5E1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-top: 0.5rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .hero-tagline {
+      font-size: 1.05rem;
+      color: var(--text-secondary);
+      max-width: 800px;
+    }
+
+    /* Key Invariant Stats Strip */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .kpi-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 1rem;
+      transition: all 0.2s ease;
+    }
+    .kpi-card:hover {
+      border-color: var(--border-accent);
+      transform: translateY(-2px);
+    }
+    .kpi-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      display: block;
+    }
+    .kpi-val {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0.25rem 0;
+      color: #FFF;
+    }
+    .kpi-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    /* Architecture Map Layers */
+    .arch-title-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .arch-title-bar h2 {
+      font-size: 1.35rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .layer-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      position: relative;
+    }
+
+    .layer-group {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 1.25rem;
+      position: relative;
+    }
+
+    .layer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.85rem;
+    }
+    .layer-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: #E2E8F0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .cards-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0.85rem;
+    }
+
+    .clickable-block {
+      background: var(--bg-elevated);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 0.9rem 1rem;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+    .clickable-block:hover {
+      border-color: var(--indigo);
+      background: var(--bg-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+    }
+    .clickable-block.selected {
+      border-color: var(--indigo);
+      box-shadow: 0 0 0 2px var(--indigo);
+    }
+
+    .block-tag {
+      font-size: 0.6875rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+      display: block;
+    }
+    .block-name {
+      font-size: 0.875rem;
+      font-weight: 700;
+      color: #FFF;
+      margin-bottom: 0.35rem;
+    }
+    .block-desc {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Downward Connector Arrow */
+    .flow-connector {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 16px;
+      color: var(--indigo);
+      font-size: 1rem;
+      opacity: 0.7;
+    }
+
+    /* Modal / Details Drawer */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      z-index: 999;
+      justify-content: center;
+      align-items: center;
+      padding: 1.5rem;
+    }
+    .modal-backdrop.active {
+      display: flex;
+    }
+
+    .modal-window {
+      background: #111827;
+      border: 1px solid var(--border-accent);
+      border-radius: 12px;
+      max-width: 650px;
+      width: 100%;
+      padding: 1.75rem;
+      position: relative;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-close {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .modal-close:hover {
+      color: #FFF;
+    }
+
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #FFF;
+      margin-bottom: 0.25rem;
+    }
+    .modal-subtitle {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+    }
+    .modal-section {
+      margin-bottom: 1rem;
+    }
+    .modal-section-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--indigo);
+      margin-bottom: 0.35rem;
+      letter-spacing: 0.05em;
+    }
+    .code-box {
+      background: #0B0F17;
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: #E2E8F0;
+      overflow-x: auto;
+      line-height: 1.5;
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 3rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border-subtle);
+      text-align: center;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <div>
+        <div style="display: flex; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem;">
+          <span class="badge badge-indigo">Razorpay Buildathon · Track 03</span>
+          <span class="badge badge-emerald">Interactive System Architecture One-Pager</span>
+        </div>
+        <h1>Second — AI Revenue Recovery Orchestrator</h1>
+        <p class="hero-tagline">
+          An autonomous payment recovery engine combining deterministic safety guardrails, an action-conditioned 51-feature S-Learner, Net Incremental Recovery (NIR) utility maximization, and strict finite state machine governance.
+        </p>
+      </div>
+      <div>
+        <span class="badge badge-cyan" style="font-size: 0.8rem; padding: 0.4rem 0.8rem;">
+          Click any block to inspect source &amp; invariants
+        </span>
+      </div>
+    </header>
+
+    <!-- KPI Strip -->
+    <div class="kpi-strip">
+      <div class="kpi-card">
+        <span class="kpi-label">ML Discrimination</span>
+        <div class="kpi-val" style="color: var(--emerald);">0.7695</div>
+        <div class="kpi-desc">Verified ROC-AUC on 2,000 held-out cases</div>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Diagnostic Accuracy</span>
+        <div class="kpi-val" style="color: #FFF;">74.85%</div>
+        <div class="kpi-desc">Held-out accuracy @ 0.50 threshold</div>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Probability Calibration</span>
+        <div class="kpi-val" style="color: var(--amber);">0.98%</div>
+        <div class="kpi-desc">Expected Calibration Error (Brier: 0.1710)</div>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Causal Feature Space</span>
+        <div class="kpi-val" style="color: var(--cyan);">51 Features</div>
+        <div class="kpi-desc">23 base + 24 category interactions + 4 fatigue</div>
+      </div>
+      <div class="kpi-card">
+        <span class="kpi-label">Architectural Honesty</span>
+        <div class="kpi-val" style="color: var(--indigo);">Zero Mock</div>
+        <div class="kpi-desc">Decoupled deterministic &amp; learned boundaries</div>
+      </div>
+    </div>
+
+    <div class="arch-title-bar">
+      <h2>Full End-to-End System Flow</h2>
+      <span style="font-size: 0.8rem; color: var(--text-muted);">From Gateway Webhook Ingestion to Terminal Recovery Ledger</span>
+    </div>
+
+    <!-- Interactive Architecture Layers -->
+    <div class="layer-container">
+
+      <!-- LAYER 1: CLIENT & WORKSPACE UI -->
+      <div class="layer-group">
+        <div class="layer-header">
+          <div class="layer-name">
+            <span class="badge badge-indigo">Layer 1</span>
+            User &amp; Command Center Interface (React 19 + TypeScript)
+          </div>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">frontend/src/pages/</span>
+        </div>
+        <div class="cards-row">
+          <div class="clickable-block" onclick="showDetails('overview')">
+            <span class="block-tag">Overview.tsx</span>
+            <div class="block-name">Executive Command Center</div>
+            <div class="block-desc">Live recovery counters, financial risk summary, real-time event stream, and verified ML performance strip.</div>
+          </div>
+          <div class="clickable-block" onclick="showDetails('simulator')">
+            <span class="block-tag">Simulator.tsx</span>
+            <div class="block-name">Failure Ingestion Sandbox</div>
+            <div class="block-desc">Interactive webhook simulator with configurable failure codes, amounts, and upstream health telemetry.</div>
+          </div>
+          <div class="clickable-block" onclick="showDetails('replay')">
+            <span class="block-tag">DecisionReplayPage.tsx</span>
+            <div class="block-name">Forensic AI Inspector</div>
+            <div class="block-desc">6-step visual FSM stepper, policy filter audit, 7-column NIR matrix table, and exportable audit report.</div>
+          </div>
+          <div class="clickable-block" onclick="showDetails('benchmark')">
+            <span class="block-tag">BenchmarkLab.tsx</span>
+            <div class="block-name">Monte Carlo Research Lab</div>
+            <div class="block-desc">Head-to-head empirical testing of Second vs Blind Retry baseline across arbitrary sample sizes and seeds.</div>
+          </div>
+          <div class="clickable-block" onclick="showDetails('boundaries')">
+            <span class="block-tag">ArchitecturePage.tsx</span>
+            <div class="block-name">AI Boundaries &amp; Spec</div>
+            <div class="block-desc">Interactive visualizer for Tier-1 Deterministic, Tier-2 Learned ML, and Tier-3 Execution boundaries.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-connector">▼ RESTful API Calls via /api/v1 (FastAPI)</div>
+
+      <!-- LAYER 2: INGESTION & REST API -->
+      <div class="layer-group">
+        <div class="layer-header">
+          <div class="layer-name">
+            <span class="badge badge-cyan">Layer 2</span>
+            API Gateway, Contract Validation &amp; Routing
+          </div>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">app/api/routes/ · app/domain/schemas.py</span>
+        </div>
+        <div class="cards-row">
+          <div class="clickable-block" onclick="showDetails('cases_route')">
+            <span class="block-tag">POST /cases/</span>
+            <div class="block-name">Case Ingestion &amp; Pipeline</div>
+            <div class="block-desc">Accepts factual PaymentFailureEvent instances, enforces Pydantic constraints, and executes single-case pipeline.</div>
+          </div>
+          <div class="clickable-block" onclick="showDetails('reevaluate_route')">
+            <span class="block-tag">POST /cases/{id}/reevaluate</span>
+            <div class="block-name">Conditional Re-evaluation</div>
+            <div class="block-desc">Refreshes context (e.g. gateway health upgrade), unblocks waiting cases, and triggers next action evaluation.</div>
+          </div>
+          <div class="clickable-block" onclick="showDetails('benchmark_route')">
+            <span class="block-tag">POST /evaluation/run</span>
+            <div class="block-name">Batch Benchmark Runner</div>
+            <div class="block-desc">Executes N-case counterfactual trial against blind baseline, logging revenue conserved and retries averted.</div>
+          </div>
+          <div class="clickable-block" onclick="showDetails('schemas')">
+            <span class="block-tag">schemas.py</span>
+            <div class="block-name">Pydantic Fact Contracts</div>
+            <div class="block-desc">Enforces FACTS ONLY: input schema contains no labels or probabilities. Eliminates train/serve leakage.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-connector">▼ Factual Event Handed to Orchestrator</div>
+
+      <!-- LAYER 3: TIER 1 DETERMINISTIC POLICY -->
+      <div class="layer-group">
+        <div class="layer-header">
+          <div class="layer-name">
+            <span class="badge badge-rose">Layer 3 · Tier 1 Boundary</span>
+            Deterministic Profiling &amp; Non-Bypassable Policy Gates
+          </div>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">app/services/failure_profiler.py · app/core/policy_engine.py</span>
+        </div>
+        <div class="cards-row">
+          <div class="clickable-block" onclick="showDetails('profiler')">
+            <span class="block-tag">failure_profiler.py</span>
+            <div class="block-name">Root Cause Profiler</div>
+            <div class="block-desc">Maps 20+ failure codes deterministically into 6 standardized categories (INFRASTRUCTURE_TRANSIENT, etc.).</div>
+          </div>
+          <div class="clickable-block" onclick="showDetails('policy')">
+            <span class="block-tag">policy_engine.py</span>
+            <div class="block-name">Policy Gatekeeper</div>
+            <div class="block-desc">Enforces business &amp; regulatory guardrails from config/policy.yaml. AI cannot override this layer.</div>
+          </div>
+          <div class="clickable-block" onclick="showDetails('guardrails')">
+            <span class="block-tag">Guardrail Invariants</span>
+            <div class="block-name">Safety Constraints</div>
+            <div class="block-desc">Hard stop on FRAUD_SUSPECTED, max retry cap (&le; 3), mandatory cooldown backoff, and max recovery window.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-connector">▼ Policy-Eligible Action Set Filtered</div>
+
+      <!-- LAYER 4: TIER 2 LEARNED ML & NIR -->
+      <div class="layer-group">
+        <div class="layer-header">
+          <div class="layer-name">
+            <span class="badge badge-emerald">Layer 4 · Tier 2 Boundary</span>
+            Learned ML Intelligence &amp; NIR Economic Optimization
+          </div>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">app/ml/ · app/services/action_evaluator.py · action_router.py</span>
+        </div>
+        <div class="cards-row">
+          <div class="clickable-block" onclick="showDetails('feature_eng')">
+            <span class="block-tag">feature_engineering.py</span>
+            <div class="block-name">51 Causal Features</div>
+            <div class="block-desc">Single source of truth: 23 base features + 24 category&times;action interactions + 4 fatigue/health modifiers.</div>
+          </div>
+          <div class="clickable-block" onclick="showDetails('ml_model')">
+            <span class="block-tag">data/model.joblib</span>
+            <div class="block-name">Logistic Regression S-Learner</div>
+            <div class="block-desc">Pipeline(StandardScaler, LogisticRegression L2, C=1.0). ROC-AUC 0.7695, Accuracy 74.85%, ECE 0.98%.</div>
+          </div>
+          <div class="clickable-block" onclick="showDetails('evaluator')">
+            <span class="block-tag">action_evaluator.py</span>
+            <div class="block-name">Counterfactual Lift (&Delta;P)</div>
+            <div class="block-desc">Scores P(Recovery | Action) vs P(Recovery | WAIT) baseline. Eliminates unneeded interventions with zero lift.</div>
+          </div>
+          <div class="clickable-block" onclick="showDetails('router')">
+            <span class="block-tag">action_router.py</span>
+            <div class="block-name">NIR Revenue Maximizer</div>
+            <div class="block-desc">NIR = (&Delta;P &times; Amount) - Cost. Selects max positive NIR action; gracefully falls back to WAIT if NIR &le; 0.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flow-connector">▼ Selected Optimal Action Dispatched</div>
+
+      <!-- LAYER 5: TIER 3 FSM EXECUTION & LEDGER -->
+      <div class="layer-group">
+        <div class="layer-header">
+          <div class="layer-name">
+            <span class="badge badge-cyan">Layer 5 · Tier 3 Boundary</span>
+            Acyclic State Machine &amp; Immutable Audit Ledger
+          </div>
+          <span style="font-size: 0.75rem; color: var(--text-muted);">app/core/state_machine.py · app/services/orchestrator.py · audit_service.py</span>
+        </div>
+        <div class="cards-row">
+          <div class="clickable-block" onclick="showDetails('fsm')">
+            <span class="block-tag">state_machine.py</span>
+            <div class="block-name">Strict Acyclic FSM</div>
+            <div class="block-desc">Governs valid lifecycle transitions: PAYMENT_FAILED &rarr; PROFILING &rarr; POLICY_CHECKED &rarr; EXECUTING &rarr; RECOVERED/HALTED.</div>
+          </div>
+          <div class="clickable-block" onclick="showDetails('executors')">
+            <span class="block-tag">executors/</span>
+            <div class="block-name">Intervention Executors</div>
+            <div class="block-desc">MockGateway (rerouting), SilentRetryExecutor (backoff), CustomerResolutionExecutor (self-serve portal).</div>
+          </div>
+          <div class="clickable-block" onclick="showDetails('audit')">
+            <span class="block-tag">audit_service.py</span>
+            <div class="block-name">Cryptographic Audit Ledger</div>
+            <div class="block-desc">Immutable chronological ledger recording every state transition with timestamp, previous state, and metadata.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Modal Window for Interactive Details -->
+    <div id="detailModal" class="modal-backdrop" onclick="closeModal(event)">
+      <div class="modal-window" onclick="event.stopPropagation()">
+        <button class="modal-close" onclick="closeModalDirect()">&times;</button>
+        <span id="modalCategoryBadge" class="badge badge-indigo">Layer Specification</span>
+        <h3 id="modalTitle" class="modal-title" style="margin-top: 0.5rem;">Component Title</h3>
+        <p id="modalSubtitle" class="modal-subtitle">Component Subtitle &amp; Role</p>
+
+        <div class="modal-section">
+          <div class="modal-section-title">Description &amp; Core Responsibility</div>
+          <p id="modalDesc" style="font-size: 0.8125rem; color: var(--text-secondary); line-height: 1.5;"></p>
+        </div>
+
+        <div class="modal-section">
+          <div class="modal-section-title">Architectural Guarantee / Invariant</div>
+          <div id="modalInvariant" class="code-box"></div>
+        </div>
+
+        <div class="modal-section">
+          <div class="modal-section-title">Source Code Paths</div>
+          <div id="modalPaths" class="code-box" style="color: var(--cyan);"></div>
+        </div>
+
+        <div class="modal-section">
+          <div class="modal-section-title">Data Ingestion &amp; Output Contracts</div>
+          <div id="modalContracts" class="code-box" style="color: #A5B4FC;"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      Second — Built for Razorpay Buildathon (Track 03: AI Revenue Recovery) · MIT License · Rigorous Architectural Honesty
+    </footer>
+  </div>
+
+  <script>
+    const detailsData = {
+      overview: {
+        title: "Executive Command Center (Overview.tsx)",
+        badge: "Layer 1: Frontend Workspace",
+        badgeClass: "badge-indigo",
+        subtitle: "Executive situational awareness & live pipeline performance",
+        desc: "Displays real-time financial aggregates (Total Volume at Risk, Live Gross Recovered, Real Recovery Rate), an action distribution breakdown, an active recovery timeline, and the verified ML performance strip directly to operations teams.",
+        invariant: "Derived 100% dynamically from actual ingested cases. No hardcoded or synthetic counters displayed in operational paths.",
+        paths: "frontend/src/pages/Overview.tsx\nfrontend/src/hooks/useCountUp.ts\nfrontend/src/hooks/useScrollReveal.ts",
+        contracts: "Input: CaseListItem[] via GET /cases/\nOutput: Real-time UI rendering & deep-link routing into forensic replay"
+      },
+      simulator: {
+        title: "Failure Ingestion Sandbox (Simulator.tsx)",
+        badge: "Layer 1: Frontend Workspace",
+        badgeClass: "badge-indigo",
+        subtitle: "Interactive developer sandbox for live pipeline execution",
+        desc: "Allows operators and evaluators to construct arbitrary PaymentFailureEvent instances, test specific failure codes (e.g. RATE_LIMITED, CVV_MISMATCH), tune upstream gateway health scores, and observe end-to-end execution in real-time.",
+        invariant: "Submits real JSON payloads to the backend FastAPI endpoint. No fake frontend bypasses.",
+        paths: "frontend/src/pages/Simulator.tsx\nfrontend/src/components/NewEventModal.tsx",
+        contracts: "Input: Operator form data (amount, failure_code, gateway_health)\nOutput: DecisionExplanation from POST /cases/"
+      },
+      replay: {
+        title: "Forensic AI Inspector (DecisionReplayPage.tsx)",
+        badge: "Layer 1: Frontend Workspace",
+        badgeClass: "badge-indigo",
+        subtitle: "Complete forensic auditability for every recovery decision",
+        desc: "Provides a visual 6-step lifecycle stepper, policy gate explanation (showing why unsafe actions were blocked), a 7-column Net Incremental Recovery (NIR) matrix, and a cryptographic audit trail. Includes an 'Export Forensic Audit Report' feature.",
+        invariant: "Inspects immutable decisions stored in the database. Every number matches the exact backend decision snapshot.",
+        paths: "frontend/src/pages/DecisionReplayPage.tsx\nfrontend/src/services/api.ts",
+        contracts: "Input: GET /cases/{id}/decision & GET /cases/{id}/audit\nOutput: Transparent mathematical & policy verification"
+      },
+      benchmark: {
+        title: "Monte Carlo Research Lab (BenchmarkLab.tsx)",
+        badge: "Layer 1: Frontend Workspace",
+        badgeClass: "badge-indigo",
+        subtitle: "Empirical proof of Second vs Blind Retry baseline",
+        desc: "Executes batch trials across randomized seeds and customizable batch sizes (N=100..1000). Compares Second's intelligent value-maximization against the industry standard of blindly retrying every failure. Demonstrates average +51.8% Net Revenue Uplift across seeds.",
+        invariant: "Both systems evaluate the exact same stream of held-out transactions. Authentic stochastic realism (80% win rate).",
+        paths: "frontend/src/pages/BenchmarkLab.tsx\napp/evaluation/batch_runner.py",
+        contracts: "Input: POST /evaluation/run?n=500&seed=777\nOutput: Side-by-side revenue, cost, and intervention metrics"
+      },
+      boundaries: {
+        title: "AI Boundaries & Specification (ArchitecturePage.tsx)",
+        badge: "Layer 1: Frontend Workspace",
+        badgeClass: "badge-indigo",
+        subtitle: "Architectural governance & mathematical reference",
+        desc: "Documents the three non-overlapping tiers: Tier-1 Deterministic Policy, Tier-2 Learned ML, and Tier-3 State Machine Execution. Details the NIR formula, the intervention cost catalog, the acyclic state transition graph, and the verified 51-feature model parameters.",
+        invariant: "Machine learning predictions NEVER override hard deterministic security, fraud, or retry limit policies.",
+        paths: "frontend/src/pages/ArchitecturePage.tsx\nconfig/policy.yaml",
+        contracts: "Static architectural and mathematical reference matching codebase reality"
+      },
+      cases_route: {
+        title: "Case Ingestion & Processing Route",
+        badge: "Layer 2: API Gateway",
+        badgeClass: "badge-cyan",
+        subtitle: "POST /cases/ endpoint",
+        desc: "Ingests raw webhook data, instantiates a Case ORM record, and executes the orchestrator pipeline: Profiling &rarr; Policy Gates &rarr; Action Evaluation &rarr; Action Selection &rarr; FSM Dispatch &rarr; Outcome Recording.",
+        invariant: "Atomic execution with database transaction integrity. Idempotent transaction identification.",
+        paths: "app/api/routes/cases.py (Line 58)\napp/services/orchestrator.py (Line 42)",
+        contracts: "Request: PaymentFailureEvent (JSON)\nResponse: DecisionExplanation (Pydantic schema)"
+      },
+      reevaluate_route: {
+        title: "Conditional Re-evaluation Route",
+        badge: "Layer 2: API Gateway",
+        badgeClass: "badge-cyan",
+        subtitle: "POST /cases/{id}/reevaluate endpoint",
+        desc: "Enables cases paused in the RE_EVALUATE state to be unblocked when environmental telemetry changes (e.g. downstream gateway health score recovers from 0.10 to 0.95). Refreshes context and triggers re-scoring.",
+        invariant: "Only cases in RE_EVALUATE state can be resumed. Re-evaluation budget strictly enforced (max 5 rounds).",
+        paths: "app/api/routes/cases.py (Line 78)\napp/services/orchestrator.py (Line 80)",
+        contracts: "Request: Optional ReevaluateRequest(gateway_health_score)\nResponse: DecisionExplanation with refreshed action"
+      },
+      benchmark_route: {
+        title: "Batch Benchmark Evaluation Route",
+        badge: "Layer 2: API Gateway",
+        badgeClass: "badge-cyan",
+        subtitle: "POST /evaluation/run endpoint",
+        desc: "Generates N synthetic payment failures using isolated data generation and runs them sequentially through both Second and the Blind Retry baseline. Computes total revenue at risk, gross recovered, intervention costs, and net dollar gain.",
+        invariant: "Simulated environment is strictly decoupled: production code never imports simulation outcome answers.",
+        paths: "app/api/routes/evaluation.py\napp/evaluation/batch_runner.py",
+        contracts: "Request: Query params n (default 500), seed (default 777)\nResponse: BatchEvaluationResult"
+      },
+      schemas: {
+        title: "Pydantic Domain & Fact Contracts",
+        badge: "Layer 2: API Gateway",
+        badgeClass: "badge-cyan",
+        subtitle: "app/domain/schemas.py",
+        desc: "Defines core data structures: PaymentFailureEvent, ActionEvaluation, DecisionExplanation, CaseStatus, CaseListItem. Enforces the design rule that PaymentFailureEvent contains FACTS ONLY—no fields for labels, probabilities, or suggested actions.",
+        invariant: "Zero data leakage into the input contract. Schema validation strictly rejects malformed payloads.",
+        paths: "app/domain/schemas.py\napp/domain/enums.py",
+        contracts: "Pydantic v2 BaseModels with strict validation hooks"
+      },
+      profiler: {
+        title: "Failure Profiling / Root Cause Classifier",
+        badge: "Layer 3: Tier 1 Policy",
+        badgeClass: "badge-rose",
+        subtitle: "app/services/failure_profiler.py",
+        desc: "Deterministically maps gateway-specific failure codes (e.g., GATEWAY_TIMEOUT, INSUFFICIENT_FUNDS, MANDATE_EXPIRED, CARD_REPORTED_LOST_OR_STOLEN) into 6 macro failure categories. Has zero opinion on recovery actions—classifies WHAT went wrong only.",
+        invariant: "Deterministic by design. Interpreting gateway failure codes is domain knowledge, not a noisy learned model.",
+        paths: "app/services/failure_profiler.py (Lines 18-47)",
+        contracts: "Input: PaymentFailureEvent.failure_code\nOutput: FailureCategory Enum"
+      },
+      policy: {
+        title: "Policy Engine & Compliance Guardrails",
+        badge: "Layer 3: Tier 1 Policy",
+        badgeClass: "badge-rose",
+        subtitle: "app/core/policy_engine.py",
+        desc: "Evaluates context against declarative rules defined in config/policy.yaml. Filters candidate recovery actions, producing an 'allowed_actions' list and an auditable 'blocked_actions' dictionary with exact human-readable legal reasons.",
+        invariant: "Hard regulatory boundaries are non-bypassable. If an action is blocked by policy, ML can never select it.",
+        paths: "app/core/policy_engine.py\nconfig/policy.yaml",
+        contracts: "Input: (PaymentFailureEvent, FailureCategory)\nOutput: PolicyCheckResult(allowed_actions, blocked_actions)"
+      },
+      guardrails: {
+        title: "Configurable Safety Guardrails",
+        badge: "Layer 3: Tier 1 Policy",
+        badgeClass: "badge-rose",
+        subtitle: "config/policy.yaml specifications",
+        desc: "Enforces 4 critical safety guardrails: 1) Hard stop on fraud suspicion; 2) Retry exhaustion cap (maximum 3 retry attempts); 3) Mandatory customer cooldown backoff (minimum 2 hours between customer notifications); 4) Maximum recovery window (48 hours).",
+        invariant: "Protects merchant reputation, prevents payment processor rate-limiting, and eliminates customer spam.",
+        paths: "config/policy.yaml\napp/core/config.py",
+        contracts: "YAML declarative rules loaded into strongly typed PolicyConfig"
+      },
+      feature_eng: {
+        title: "51-Feature Causal Engineering",
+        badge: "Layer 4: Tier 2 ML",
+        badgeClass: "badge-emerald",
+        subtitle: "app/ml/feature_engineering.py",
+        desc: "Single source of truth for constructing model inputs. Combines 23 base features (amounts, counts, gateway health, cyclic time) with 24 FailureCategory &times; Action interaction terms and 4 domain fatigue/health modifiers. Guarantees zero train/serve skew.",
+        invariant: "Identical feature vector construction used at offline training time and live single-event inference.",
+        paths: "app/ml/feature_engineering.py (Lines 25-115)",
+        contracts: "Input: (event, failure_category, action)\nOutput: 51-element float64 NumPy vector"
+      },
+      ml_model: {
+        title: "Frozen S-Learner Pipeline",
+        badge: "Layer 4: Tier 2 ML",
+        badgeClass: "badge-emerald",
+        subtitle: "data/model.joblib · app/ml/train.py",
+        desc: "Pipeline([('scaler', StandardScaler()), ('clf', LogisticRegression(C=1.0, penalty='l2'))]). Evaluated against 19 architectures (XGBoost, LightGBM, CatBoost, ExtraTrees, GradientBoosting). Matches theoretical Bayes ceiling within 0.0018 ROC-AUC.",
+        invariant: "Ultra-low latency (<0.15 ms per action). Probability calibration (Brier 0.1710, ECE 0.98%) ensures accurate NIR math.",
+        paths: "data/model.joblib\napp/ml/train.py\napp/ml/evaluate.py",
+        contracts: "Input: (N, 51) scaled matrix\nOutput: Calibrated probability in [0, 1]"
+      },
+      evaluator: {
+        title: "Action Evaluator & Counterfactual Lift",
+        badge: "Layer 4: Tier 2 ML",
+        badgeClass: "badge-emerald",
+        subtitle: "app/services/action_evaluator.py",
+        desc: "Calculates counterfactual lift: Delta_P(a) = P(Recovery | Context, a) - P(Recovery | Context, WAIT). Models the incremental probability of success compared to passive waiting. Turns probabilities into revenue expectations.",
+        invariant: "WAIT baseline is always scored; Delta_P for WAIT is identically 0.0 by definition.",
+        paths: "app/services/action_evaluator.py (Lines 19-53)",
+        contracts: "Input: Allowed ActionType[]\nOutput: ActionEvaluation[] with predicted_p, delta_p, nir"
+      },
+      router: {
+        title: "Action Router & NIR Maximization",
+        badge: "Layer 4: Tier 2 ML",
+        badgeClass: "badge-emerald",
+        subtitle: "app/services/action_router.py",
+        desc: "Applies the economic decision rule: selects the action that maximizes NIR = (Delta_P &times; Amount) - Cost, subject to NIR > 0. If no action clears positive expected value, it gracefully routes to WAIT (if re-evaluation budget remains) or HALT.",
+        invariant: "Second NEVER executes an intervention that costs more than the expected recovered revenue.",
+        paths: "app/services/action_router.py (Lines 24-78)",
+        contracts: "Input: ActionEvaluation[]\nOutput: (Selected ActionType, Selection Reason String)"
+      },
+      fsm: {
+        title: "Strictly Acyclic Finite State Machine",
+        badge: "Layer 5: Tier 3 Execution",
+        badgeClass: "badge-cyan",
+        subtitle: "app/core/state_machine.py",
+        desc: "Enforces an acyclic lifecycle model: PAYMENT_FAILED &rarr; PROFILING &rarr; POLICY_CHECKED &rarr; ACTION_EVALUATED &rarr; EXECUTING &rarr; RE_EVALUATE &rarr; RECOVERED / HALTED. Rejects any illegal or cyclical state transition.",
+        invariant: "Terminal states (RECOVERED, HALTED) have zero exits. Case cannot transition once closed.",
+        paths: "app/core/state_machine.py\ntests/test_core.py",
+        contracts: "Input: (current_state, proposed_transition)\nOutput: Validated state or InvalidStateTransition error"
+      },
+      executors: {
+        title: "Action Executors & Recovery Dispatch",
+        badge: "Layer 5: Tier 3 Execution",
+        badgeClass: "badge-cyan",
+        subtitle: "app/services/executors/",
+        desc: "Dispatches the chosen recovery treatment: GatewayRerouteExecutor routes traffic around degraded rails; SilentRetryExecutor triggers backoff retries; CustomerResolutionExecutor creates interactive self-serve payment resolution sessions.",
+        invariant: "HALT action executes no gateway calls. Zero unnecessary charges incurred.",
+        paths: "app/services/executors/gateway_reroute.py\napp/services/executors/silent_retry.py\napp/services/executors/customer_resolution.py",
+        contracts: "Input: (Case, PaymentFailureEvent)\nOutput: ExecutionResult(success, latency_ms, metadata)"
+      },
+      audit: {
+        title: "Immutable Cryptographic Audit Ledger",
+        badge: "Layer 5: Tier 3 Execution",
+        badgeClass: "badge-cyan",
+        subtitle: "app/services/audit_service.py",
+        desc: "Maintains an append-only ledger for every case lifecycle event: PAYMENT_FAILED, FAILURE_PROFILED, POLICY_EVALUATED, ACTIONS_SCORED, ACTION_SELECTED, ACTION_EXECUTED, CASE_RECOVERED, CASE_HALTED. Enables forensic regulatory replay.",
+        invariant: "Audit events are immutable. Once written, past records are never updated or deleted.",
+        paths: "app/services/audit_service.py\napp/domain/models.py (AuditEvent)",
+        contracts: "Database table: audit_events (case_id, timestamp, event_type, metadata_json)"
+      }
+    };
+
+    function showDetails(key) {
+      const data = detailsData[key];
+      if (!data) return;
+
+      document.getElementById('modalTitle').innerText = data.title;
+      document.getElementById('modalCategoryBadge').innerText = data.badge;
+      document.getElementById('modalCategoryBadge').className = 'badge ' + data.badgeClass;
+      document.getElementById('modalSubtitle').innerText = data.subtitle;
+      document.getElementById('modalDesc').innerText = data.desc;
+      document.getElementById('modalInvariant').innerText = data.invariant;
+      document.getElementById('modalPaths').innerText = data.paths;
+      document.getElementById('modalContracts').innerText = data.contracts;
+
+      document.getElementById('detailModal').classList.add('active');
+    }
+
+    function closeModal(event) {
+      if (event.target.id === 'detailModal') {
+        document.getElementById('detailModal').classList.remove('active');
+      }
+    }
+
+    function closeModalDirect() {
+      document.getElementById('detailModal').classList.remove('active');
+    }
+
+    document.addEventListener('keydown', function(event) {
+      if (event.key === 'Escape') {
+        closeModalDirect();
+      }
+    });
+  </script>
+</body>
+</html>

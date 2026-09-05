@@ -16,7 +16,7 @@ const ROUTE_CONTEXTS: Record<NavRoute, { title: string; subtitle: string }> = {
   },
   benchmark: {
     title: "Benchmark Lab",
-    subtitle: "Monte Carlo financial research: RecoveryOS vs Blind Retry baseline",
+    subtitle: "Monte Carlo financial research: Second vs Blind Retry baseline",
   },
   "decision-replay": {
     title: "Decision Replay",
@@ -44,7 +44,7 @@ export const Topbar: React.FC<TopbarProps> = ({
   isSeeding,
 }) => {
   const context = ROUTE_CONTEXTS[currentRoute] || {
-    title: "RecoveryOS",
+    title: "Second",
     subtitle: "AI Revenue Recovery Orchestrator",
   };
 

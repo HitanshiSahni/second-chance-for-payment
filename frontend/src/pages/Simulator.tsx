@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Sliders,
   Play,
@@ -12,6 +12,7 @@ import {
 import { api, formatINR, formatPercent } from "../services/api";
 import type { DecisionExplanation, PaymentFailureEvent, ActionEvaluation } from "../types/api";
 import type { NavRoute } from "../components/Sidebar";
+import { useScrollReveal } from "../hooks/useScrollReveal";
 
 interface SimulatorProps {
   onNavigate: (route: NavRoute, caseId?: string) => void;
@@ -80,10 +81,14 @@ export const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onCaseCreated 
     }
   };
 
+  const pageRef = useRef<HTMLDivElement>(null);
+  useScrollReveal(pageRef);
+
   return (
-    <div className="simulator-page">
+    <div className="simulator-page" ref={pageRef}>
       {/* Transparency Banner */}
       <div
+        className="scroll-reveal"
         style={{
           background: "rgba(15, 23, 42, 0.75)",
           border: "1px solid var(--border-subtle)",
@@ -123,7 +128,7 @@ export const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onCaseCreated 
 
       <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", width: "100%", maxWidth: "100%" }}>
         {/* Box 1: Parameter Controls (Full Width) */}
-        <div className="card" style={{ marginBottom: 0 }}>
+        <div className="card scroll-reveal delay-1" style={{ marginBottom: 0 }}>
           <div className="card-header">
             <div>
               <h3 className="card-title">
@@ -343,7 +348,7 @@ export const Simulator: React.FC<SimulatorProps> = ({ onNavigate, onCaseCreated 
         </div>
 
         {/* Box 2: Live Decision Results (Directly Below, Full Width!) */}
-        <div className="card" style={{ marginBottom: 0 }}>
+        <div className="card scroll-reveal delay-2" style={{ marginBottom: 0 }}>
             <div className="card-header">
               <div>
                 <h3 className="card-title">

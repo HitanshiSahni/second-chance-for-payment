@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Play,
   AlertTriangle,
@@ -10,12 +10,15 @@ import {
 } from "lucide-react";
 import type { BatchEvaluationResult } from "../types/api";
 import { formatINR, formatPercent } from "../services/api";
+import { useScrollReveal } from "../hooks/useScrollReveal";
 
 interface BenchmarkLabProps {
   batchResult: BatchEvaluationResult | null;
   loading: boolean;
   error: string | null;
   onRunBatch: (n: number, seed: number) => void;
+  lastN?: number;
+  lastSeed?: number;
 }
 
 export const BenchmarkLab: React.FC<BenchmarkLabProps> = ({
@@ -23,9 +26,20 @@ export const BenchmarkLab: React.FC<BenchmarkLabProps> = ({
   loading,
   error,
   onRunBatch,
+  lastN,
+  lastSeed,
 }) => {
-  const [sampleSize, setSampleSize] = useState(500);
-  const [seed, setSeed] = useState(777);
+  const [sampleSize, setSampleSize] = useState(lastN ?? 500);
+  const [seed, setSeed] = useState(lastSeed ?? 777);
+
+  // Sync inputs with last run parameters when returning from other tabs
+  React.useEffect(() => {
+    if (lastN !== undefined) setSampleSize(lastN);
+    if (lastSeed !== undefined) setSeed(lastSeed);
+  }, [lastN, lastSeed]);
+
+  const pageRef = useRef<HTMLDivElement>(null);
+  useScrollReveal(pageRef);
 
   const ros = batchResult?.recoveryos;
   const baseline = batchResult?.blind_retry_baseline;
@@ -44,9 +58,9 @@ export const BenchmarkLab: React.FC<BenchmarkLabProps> = ({
   };
 
   return (
-    <div className="benchmark-lab-page">
+    <div className="benchmark-lab-page" ref={pageRef}>
       {/* Research Lab Header Strip */}
-      <div className="experiment-control-strip">
+      <div className="experiment-control-strip scroll-reveal">
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
           <div
             style={{
@@ -207,7 +221,7 @@ export const BenchmarkLab: React.FC<BenchmarkLabProps> = ({
                 {improvementPct !== null ? `+${improvementPct.toFixed(1)}%` : "N/A"}
               </div>
               <p className="advantage-desc">
-                RecoveryOS generated{" "}
+                Second generated{" "}
                 <strong>{formatINR(batchResult.net_recovered_value_improvement)}</strong> more
                 net revenue than blindly retrying every failed transaction.
               </p>
@@ -245,10 +259,10 @@ export const BenchmarkLab: React.FC<BenchmarkLabProps> = ({
                     Comparative A/B Performance Matrix
                   </h3>
                   <p className="card-subtitle">
-                    Evaluation of identical payment failures under Blind Retry vs. RecoveryOS
+                    Evaluation of identical payment failures under Blind Retry vs. Second
                   </p>
                 </div>
-                <span className="badge badge-muted">Seed #{seed}</span>
+                <span className="badge badge-muted">Seed #{lastSeed ?? seed}</span>
               </div>
 
               <div className="comparison-table-container">
@@ -257,7 +271,7 @@ export const BenchmarkLab: React.FC<BenchmarkLabProps> = ({
                     <tr>
                       <th>Metric</th>
                       <th>Blind Retry Baseline</th>
-                      <th>RecoveryOS</th>
+                      <th>Second</th>
                       <th>Delta / Uplift</th>
                     </tr>
                   </thead>
@@ -327,7 +341,7 @@ export const BenchmarkLab: React.FC<BenchmarkLabProps> = ({
                   Action Distribution Across {ros.total_transactions} Transactions
                 </h3>
                 <p className="card-subtitle">
-                  Blind retry applies 100% SILENT_RETRY regardless of failure cause; RecoveryOS adapts per failure mode
+                  Blind retry applies 100% SILENT_RETRY regardless of failure cause; Second adapts per failure mode
                 </p>
               </div>
             </div>
