@@ -1,0 +1,39 @@
+# RecoveryOS policy configuration
+# Every deterministic threshold used by the Policy & Compliance Gate lives
+# here, NOT hardcoded in Python. Change behavior by editing this file.
+
+limits:
+  max_retry_attempts: 3
+  max_customer_interventions: 1
+  customer_contact_cooldown_hours: 24
+  max_recovery_window_hours: 96          # a case older than this must HALT
+  max_reevaluations: 5
+
+costs:
+  # Estimated operational/API cost of each action, in the transaction currency.
+  INFRASTRUCTURE_RECOVERY: 2.0
+  SILENT_RETRY: 0.5
+  WAIT: 0.0
+  CUSTOMER_RESOLUTION: 15.0
+  HALT: 0.0
+
+nir:
+  # Minimum NIR for an action to be worth taking at all. Actions below this
+  # (including negative NIR) are not selected; the router falls back to
+  # WAIT (if a future re-evaluation could plausibly help) or HALT.
+  min_positive_nir_threshold: 0.5
+
+wait:
+  reevaluation_delay_minutes: 30
+
+gateway_health:
+  # Below this, infrastructure-level recovery is not attempted because the
+  # gateway itself is considered unhealthy right now.
+  min_health_for_infra_recovery: 0.35
+
+hard_failure_codes:
+  # Failure codes that are policy-blocked from any retry-style action,
+  # regardless of what the model predicts (e.g. card reported stolen).
+  - "CARD_REPORTED_LOST_OR_STOLEN"
+  - "ACCOUNT_CLOSED"
+  - "FRAUD_SUSPECTED"
