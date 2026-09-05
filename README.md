@@ -113,7 +113,7 @@ Turn probabilities into financial impact:
 $$\text{NIR}(A) = (\Delta P(A) \times \text{Amount}) - \text{Cost}(A)$$
 
 ### 3. Action Selection Rule
-$$\text{Action}^* = \operatorname*{arg\,max}_{A \in \mathcal{A}_{\text{eligible}}} \text{NIR}(A) \quad \text{subject to} \quad \text{NIR}(A) \ge \tau$$
+$$\text{Action}^* = \arg\max_{A \in \mathcal{A}_{\text{eligible}}} \text{NIR}(A) \quad \text{subject to} \quad \text{NIR}(A) \ge \tau$$
 
 *If all eligible interventions yield $\text{NIR}(A) < \tau$ (e.g., ₹0.50 minimum threshold), the system defaults to `WAIT` (if retry budget remains) or `HALT` to avoid wasting money on negative-ROI interventions.*
 
